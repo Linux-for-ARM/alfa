@@ -1,0 +1,32 @@
+[package]
+name = "alfa"
+version = "0.1.0"
+edition = "2021"
+description = "Automated Linux for ARM (LFA)"
+authors = ["Michail Krasnov <michail383krasnov@mail.ru>"]
+license = "MIT"
+
+[[bin]]
+name = "alfa"
+
+[[bin]]
+name = "alfa-runner"
+
+[profile.release]
+lto = true
+strip = true
+debug = false
+panic = "abort"
+opt-level = "s"
+
+[dependencies]
+anyhow = "1.0.95"
+clap = { version = "4.5.23", features = ["derive"] }
+colored = "2.2.0"
+futures-util = "0.3.31"
+indicatif = "0.17.9"
+md5 = "0.7.0"
+reqwest = { version = "0.12.12", features = ["stream"] }
+serde = { version = "1.0.217", features = ["derive"] }
+toml = "0.8.19"
+uuid = { version = "1.11.0", features = ["v4", "fast-rng"] }

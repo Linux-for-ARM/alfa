@@ -1,0 +1,8 @@
+stage = "cross-compiler"
+generic_name = "linux-headers"
+name = "Linux"
+file_name = "linux-6.6.44.tar.xz"
+commands = [
+  "make mrproper",
+  "make ARCH=arm64 INSTALL_HDR_PATH=$LFA_CROSS headers_install",
+]
