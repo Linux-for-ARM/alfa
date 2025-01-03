@@ -5,8 +5,10 @@ use colored::Colorize;
 use std::fs::create_dir_all;
 use std::process::Command;
 
+use crate::process_msg;
 // use crate::config::Config;
 use crate::profile::Profile;
+use crate::tui::process_msg_result_err;
 
 pub struct Prepare<'a> {
     pub profile: &'a Profile,
@@ -15,11 +17,25 @@ pub struct Prepare<'a> {
 impl<'a> Prepare<'a> {
     pub fn create_alfa_dirs(&self) -> Result<()> {
         // create root dir
-        create_dir_all(&self.profile.build_dir)?;
+        process_msg!(
+            "Create root directory '{}'",
+            &self.profile.build_dir.dimmed()
+        );
+        let rslt = create_dir_all(&self.profile.build_dir);
+        process_msg_result_err(
+            rslt.is_ok(),
+            if let Err(err) = rslt { Some(err) } else { None },
+        );
 
         // create other dirs
         for i in ["lfa", "src", "scripts"] {
-            create_dir_all(format!("{}/{}", &self.profile.build_dir, i))?;
+            let dir = format!("{}/{}", &self.profile.build_dir, i);
+            process_msg!("Create subdirectory '{}'", &dir.dimmed());
+            let rslt = create_dir_all(&dir);
+            process_msg_result_err(
+                rslt.is_ok(),
+                if let Err(err) = rslt { Some(err) } else { None },
+            );
         }
 
         Ok(())
