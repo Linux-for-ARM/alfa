@@ -14,6 +14,19 @@ pub struct Profile {
     pub build_dir: String,
 }
 
+fn str_sanitizer(s: &str) -> String {
+    let symbols = [
+        '?', '/', ':', '!', '~', '@', '#', '$', '%', '^', '&', '*', '(', ')', '+', '{', '}', '[',
+        ']', '\'', '"', '<', '>', '\\', ',', '.',
+    ];
+    let mut s = String::from(s);
+    for sym in symbols {
+        s = s.replace(sym, "");
+    }
+    s = s.replace(' ', "_");
+    s
+}
+
 impl Profile {
     pub fn new(sys: &System) -> Self {
         let uuid = Uuid::new_v4().simple().to_string();
@@ -22,15 +35,15 @@ impl Profile {
             user_name: format!("lfa_{}", &uuid),
             build_dir: format!(
                 "/mnt/{}-{}-{}",
-                &sys.name.replace(' ', "_"),
-                &sys.version.replace(' ', "_"),
+                str_sanitizer(&sys.name),
+                str_sanitizer(&sys.version),
                 &uuid
             ),
         }
     }
 
     pub fn to_env_map(&self) -> HashMap<&str, String> {
-        let mut map =HashMap::new();
+        let mut map = HashMap::new();
         map.insert("ALFA_USER", self.user_name.clone());
         map.insert("ALFA_BUILD_DIR", self.build_dir.clone());
 
