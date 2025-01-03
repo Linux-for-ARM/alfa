@@ -39,6 +39,12 @@ where
     };
     let prefix = prefix.as_ref();
 
+    let fpth = prefix.join(&path);
+    if fpth.exists() {
+        println!("File '{}' is already downloaded.", &path.dimmed());
+        return Ok(());
+    }
+
     let total_size = res.content_length().unwrap_or(u64::MAX) / 1024;
 
     let pb = ProgressBar::new(total_size);
@@ -54,7 +60,7 @@ where
     );
     pb.set_message(hdr);
 
-    let mut file = File::create(prefix.join(path))?;
+    let mut file = File::create(fpth)?;
     let mut downloaded: u64 = 0;
     let mut stream = res.bytes_stream();
 
