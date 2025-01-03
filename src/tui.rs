@@ -67,8 +67,8 @@ macro_rules! msg {
 
     ($($arg:tt)*) => {{
         use colored::Colorize;
-        let msg = format!("{}", format_args!($($arg)*));
-        println!("==> {}", msg.bold().yellow());
+        let msg = format!("{}", format_args!($($arg)*)).bold().yellow();
+        println!("\n==> {}", msg);
     }};
 }
 
@@ -77,7 +77,7 @@ macro_rules! process_msg {
     ($($arg:tt)*) => {{
         use ::std::io::{Write, stdout};
 
-        print!("{}", format_args!($($arg)*));
+        print!("{}... ", format_args!($($arg)*));
         let _ = stdout().flush();
     }};
 }
