@@ -1,6 +1,6 @@
 stage = "cross-compiler"
-generic_name = "linux-headers"
-name = "Linux"
+generic_name = "Linux"
+name = "linux-headers"
 file_name = "linux-6.6.44.tar.xz"
 commands = [
   "make mrproper",
