@@ -2,6 +2,7 @@
 
 use std::path::Path;
 
+use alfa::instruction::Instruction;
 use alfa::tui::{process_msg_result, process_msg_result_err};
 use anyhow::Result;
 use clap::{Parser, Subcommand};
@@ -71,16 +72,13 @@ fn main() -> Result<()> {
         Command::Config { config, profile } => {
             let conf = Config::from_stdin()?;
 
-            process_msg!(
-                "\nWrite submited configuration to '{}'... ",
-                &config.dimmed()
-            );
+            process_msg!("\nWrite submited configuration to '{}'", &config.dimmed());
             match conf.write(&config) {
                 Ok(_) => process_msg_result(true),
                 Err(why) => process_msg_result_err(false, Some(why)),
             }
 
-            process_msg!("Generate build profile to '{}'... ", &profile.dimmed());
+            process_msg!("Generate build profile to '{}'", &profile.dimmed());
             let prof = Profile::new(&conf.system);
             match prof.write(&profile) {
                 Ok(_) => process_msg_result(true),
@@ -118,7 +116,7 @@ fn main() -> Result<()> {
                     &format!("{}/src/", &profile.build_dir),
                 )?;
 
-                process_msg!("Check file... ");
+                process_msg!("Check file");
                 let check = check_md5(
                     Path::new(&format!("{}/src/", &profile.build_dir))
                         .join(url.rsplit_once('/').unwrap().1),
@@ -136,7 +134,23 @@ fn main() -> Result<()> {
                 }
             }
 
-            msg!("All is ok!");
+            msg!("Generate build scripts...");
+            let instr = Instruction::read("instructions/cross-compiler/linux-headers.toml")?;
+            let pkgver = match packages.package.get(&instr.name) {
+                Some(pkg) => &pkg.version,
+                None => {
+                    let name = &instr.generic_name;
+                    let name = &name.clone().unwrap_or("".to_string());
+                    match packages.package.get(name) {
+                        Some(pkg) => &pkg.version,
+                        None => "0",
+                    }
+                }
+            };
+            instr.gen_sh(format!("{}/scripts/", &profile.build_dir), &pkgver)?;
+
+            msg!("Done.");
+            println!("\nPlease execute:\n\tsudo alfa build\nfor build your LFA system.");
         }
         _ => todo!(),
     }
