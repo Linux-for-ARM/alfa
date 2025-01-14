@@ -8,7 +8,7 @@ use anyhow::Result;
 use clap::{Parser, Subcommand};
 use colored::Colorize;
 
-use alfa::build_meta::PackageList;
+use alfa::build_meta::{PackageList, PackageOrder};
 use alfa::config::Config;
 use alfa::downloader::{check_md5, download};
 use alfa::prepare::Prepare;
@@ -47,6 +47,9 @@ enum Command {
 
         #[arg(short = 'P', long, default_value_t = String::from("./instructions/packages.toml"))]
         packages: String,
+
+        #[arg(short, long, default_value_t = String::from("./instructions/pkg_order.toml"))]
+        order: String,
     },
 
     /// Build LFA system from source
@@ -91,6 +94,7 @@ fn main() -> Result<()> {
             config,
             profile,
             packages,
+            order,
         } => {
             drop(config);
 
@@ -106,6 +110,7 @@ fn main() -> Result<()> {
 
             msg!("Download files...");
             let mut fails = 0;
+
             for pkg in &packages.package {
                 let url = &pkg.1.download;
                 let client = reqwest::Client::new();
@@ -135,19 +140,28 @@ fn main() -> Result<()> {
             }
 
             msg!("Generate build scripts...");
-            let instr = Instruction::read("instructions/cross-compiler/linux-headers.toml")?;
-            let pkgver = match packages.package.get(&instr.name) {
-                Some(pkg) => &pkg.version,
-                None => {
-                    let name = &instr.generic_name;
-                    let name = &name.clone().unwrap_or("".to_string());
-                    match packages.package.get(name) {
-                        Some(pkg) => &pkg.version,
-                        None => "0",
+            let pkg_order = PackageOrder::read(&order)?;
+
+            for pkg in &pkg_order.packages {
+                println!("package {pkg}...");
+
+                let pkg = format!("{}/{}.toml", &pkg_order.prefix, pkg);
+                let instr = Instruction::read(pkg)?;
+
+                let pkgver = match packages.package.get(&instr.name) {
+                    Some(pkg) => &pkg.version,
+                    None => {
+                        let name = &instr.generic_name;
+                        let name = &name.clone().unwrap_or("".to_string());
+                        match packages.package.get(name) {
+                            Some(pkg) => &pkg.version,
+                            None => "0",
+                        }
                     }
-                }
-            };
-            instr.gen_sh(format!("{}/scripts/", &profile.build_dir), &pkgver)?;
+                };
+
+                instr.gen_sh(format!("{}/scripts/", &profile.build_dir), &pkgver)?;
+            }
 
             msg!("Done.");
             println!("\nPlease execute:\n\tsudo alfa build\nfor build your LFA system.");
